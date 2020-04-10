@@ -3,7 +3,7 @@ import random
 from dataclasses import dataclass
 from typing import *
 
-from .hyperparameters import HyperParameters
+from hyperparameters import HyperParameters
 
 
 @dataclass

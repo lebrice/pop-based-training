@@ -2,18 +2,18 @@ import copy
 import dataclasses
 import logging
 import random
+from functools import singledispatchmethod
 
+from hyperparameters import HyperParameters
 from utils import T
 
-from model.candidate import Candidate
-from model.hyperparameters import HyperParameters
-from model.population import Population
+from model import Candidate, Population
 
 logger = logging.getLogger(__file__)
 
 
 class MutationOperator:
-    def __init__(self, mu: float=0., sigma: float=1.0, reset_prob: float=0.05):
+    def __init__(self, mu: float=1., sigma: float=1.0, reset_prob: float=0.05):
         self.mu = mu
         self.sigma = sigma
         self.reset_prob = reset_prob
@@ -21,29 +21,25 @@ class MutationOperator:
     def __call__(self, obj: T, inplace: bool=False) -> T:
         """ Mutates either a `HyperParameters`, `Candidate` or `Population`. """ 
         obj = obj if inplace else copy.deepcopy(obj)
-        if isinstance(obj, HyperParameters):
-            self.mutate_hparam(obj)
-        elif isinstance(obj, Candidate):
-            self.mutate_candidate(obj)
-        elif isinstance(obj, Population):
-            self.mutate_population(obj)
-        else:
-            # TODO: Add a case for nn.Module instance?
-            try:
-                self.mutate_hparam(obj)
-            except Exception as e:
-                logger.error(f"Couldn't mutate the object {obj}")
+        self.mutate(obj)
         return obj
 
-    def mutate_population(self, population: Population) -> None:
+    @singledispatchmethod
+    def mutate(self, obj) -> None:
+        pass
+
+    @mutate.register
+    def mutate_pop(self, population: Population) -> None:
         """ Mutates a Population instance in-place. """
         for candidate in population:
-            self.mutate_candidate(candidate)
+            self.mutate(candidate)
 
+    @mutate.register
     def mutate_candidate(self, candidate: Candidate) -> None:
         """ Mutates a Candidate instance in-place. """
-        self.mutate_hparam(candidate.hparams)
+        self.mutate(candidate.hparams)
 
+    @mutate.register
     def mutate_hparam(self, obj: HyperParameters) -> None:
         """ Mutates a HyperParameters instance in-place. """
         obj = obj
@@ -53,7 +49,7 @@ class MutationOperator:
 
             new_value = value
             if isinstance(value, HyperParameters):
-                new_value = self.mutate_candidate(value)
+                new_value = self.mutate(value)
             elif isinstance(value, (int, float)):
                 new_value = value * noise
             
@@ -74,7 +70,7 @@ class MutationOperator:
                 if field.default is not dataclasses.MISSING:
                     new_value = field.default
                 else:
-                    new_value = field.default_factory()
+                    new_value = field.default_factory()  # type: ignore
             
             # Set the attribute back on obj.
             setattr(obj, field.name, new_value)

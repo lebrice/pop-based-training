@@ -1,13 +1,15 @@
 import multiprocessing
+import os
 import pprint
 import random
 from dataclasses import dataclass
 from itertools import combinations
 from typing import *
-import os
 
-from model import Candidate, HyperParameters, Population
+from hyperparameters import HyperParameters, hparam
+from model import Candidate, Population
 from operators import CrossoverOperator, MutationOperator
+from priors import LogUniformPrior, UniformPrior
 
 
 def evaluate(candidate: Candidate) -> Candidate:
@@ -53,20 +55,19 @@ def epbt(max_generations: int, initial_population: Population):
     return population
 
 
-from model.hyperparameters import param
-from priors import LogUniformPrior, UniformPrior
 
 
 @dataclass
 class Bob(HyperParameters):
-    learning_rate: float = param(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
-    n_layers: int = param(10, prior=UniformPrior(1,20))
+    learning_rate: float = hparam(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
+    n_layers: int = hparam(10, prior=UniformPrior(1,20))
     optimizer: str = "ADAM"
     momentum: float = 0.9
 
 
 if __name__ == "__main__":
-    pop: List[Candidate] = Population([
+    random.seed(0)
+    pop = Population([
         Candidate(model=None, hparams=Bob(learning_rate=1e-2), fitness=0.1),
         Candidate(model=None, hparams=Bob(learning_rate=1e-5), fitness=0.2),
         Candidate(model=None, hparams=Bob(learning_rate=1e-7), fitness=0.5),

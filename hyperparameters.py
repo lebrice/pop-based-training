@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import contextmanager
 from dataclasses import InitVar, dataclass, field, fields
-from typing import *
+from typing import ClassVar, Type, Dict
 from typing import TypeVar, cast
 
 from priors import LogUniformPrior, Prior, UniformPrior
@@ -15,7 +15,7 @@ from utils import T
 H = TypeVar("H", bound="HyperParameters")
 
 
-def param(default: T=None,
+def hparam(default: T,
           *args,
           min: T=None,
           max: T=None,
@@ -29,10 +29,6 @@ def param(default: T=None,
     })
     kwargs["metadata"] = metadata
 
-    # if prior and not kwargs.get("default_factory"):
-    #     kwargs["default_factory"] = prior.sample
-    #     return dataclasses.field(*args, **kwargs)
-    # else:
     return dataclasses.field(
         default=default,
         *args, **kwargs, 
@@ -51,7 +47,6 @@ class HyperParameters:
             if prior is not None:
                 value = prior.sample()
                 setattr(self, field.name, value)
-
 
     @property
     def asdict(self) -> Dict:
@@ -76,17 +71,12 @@ if __name__ == "__main__":
 
     @dataclass
     class Bob(HyperParameters):
-        learning_rate: float = param(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
-        n_layers: int = param(10, prior=UniformPrior(1,20))
+        learning_rate: float = hparam(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
+        n_layers: int = hparam(10, prior=UniformPrior(1,20))
         optimizer: str = "ADAM"
         momentum: float = 0.9
 
+    bob = Bob(learning_rate=0.1, n_layers=2)
+    print(bob)
     bob1 = Bob.sample()
     print(bob1)
-    bob2 = Bob(2)
-    print(bob2)
-    print(bob1.crossover(bob2))
-    exit()
-
-    random_bob = Bob.sample()
-    print(random_bob)

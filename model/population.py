@@ -3,8 +3,9 @@ import random
 from dataclasses import dataclass
 from typing import *
 
+from hyperparameters import HyperParameters
+
 from .candidate import Candidate
-from .hyperparameters import HyperParameters
 
 
 class Population(List[Candidate]):
