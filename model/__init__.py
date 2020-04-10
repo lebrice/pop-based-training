@@ -1,9 +1,9 @@
 from .candidate import Candidate
-from .hyperparameters import HyperParameters, field
+from .hyperparameters import HyperParameters, param
 from .population import Population
 
 __all__ = [
     "Candidate",
-    "HyperParameters", "field",
+    "HyperParameters", "param",
     "Population",
 ]

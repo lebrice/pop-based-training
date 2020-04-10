@@ -30,13 +30,10 @@ class CrossoverOperator:
         return obj1, obj2
 
 @singledispatch
-def crossover(obj1, obj2, swap_p: float=0.5) -> None:
-    logger.error(f"Unable to apply crossover to objects {obj1} and {obj2} of type {type(obj1)}.")
-
-@crossover.register
-def _(obj1: object, obj2: object, swap_p: float=0.5) -> None:
+def crossover(obj1: object, obj2: object, swap_p: float=0.5) -> None:
     """ Most General case: Randomly swap the attributes on two objects """
     crossover(vars(obj1), vars(obj2), swap_p)
+
 
 @crossover.register
 def _(obj1: HyperParameters, obj2: HyperParameters, swap_p: float=0.5) -> None:
@@ -52,6 +49,7 @@ def _(obj1: HyperParameters, obj2: HyperParameters, swap_p: float=0.5) -> None:
             setattr(obj1, field.name, v2)
             setattr(obj2, field.name, v1)
 
+
 @crossover.register
 def _(pop1: Population, pop2: Population=None, swap_p: float=0.5) -> None:
     """ Performs crossover either within one or between two `Population` instances in-place. """
@@ -61,10 +59,12 @@ def _(pop1: Population, pop2: Population=None, swap_p: float=0.5) -> None:
     for c1, c2 in zip(pop1, pop2):
         crossover(c1, c2, swap_p)
 
+
 @crossover.register
 def _(candidate1: Candidate, candidate2: Candidate, swap_p: float=0.5) -> None:
     """ Performs crossover between two `Candidate` instances in-place. """
     crossover(candidate1.hparams, candidate2.hparams, swap_p)
+
 
 @crossover.register
 def _(obj1: dict, obj2: dict, swap_p: float=0.5) -> None:

@@ -15,7 +15,12 @@ from utils import T
 H = TypeVar("H", bound="HyperParameters")
 
 
-def field(default: T=None, *args, min: T=None, max: T=None, prior: Prior=None,  **kwargs) -> T:
+def param(default: T=None,
+          *args,
+          min: T=None,
+          max: T=None,
+          prior: Prior=None,
+          **kwargs) -> T:
     metadata = kwargs.get("metadata", {})
     metadata.update({
         "min": min,
@@ -71,8 +76,8 @@ if __name__ == "__main__":
 
     @dataclass
     class Bob(HyperParameters):
-        learning_rate: float = field(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
-        n_layers: int = field(10, prior=UniformPrior(1,20))
+        learning_rate: float = param(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
+        n_layers: int = param(10, prior=UniformPrior(1,20))
         optimizer: str = "ADAM"
         momentum: float = 0.9
 
