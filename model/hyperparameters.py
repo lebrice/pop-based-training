@@ -42,7 +42,8 @@ class HyperParameters:
         if not self.sample_from_priors:
             return
         for field in dataclasses.fields(self):
-            if prior := field.metadata.get("prior"):
+            prior = field.metadata.get("prior")
+            if prior is not None:
                 value = prior.sample()
                 setattr(self, field.name, value)
 
