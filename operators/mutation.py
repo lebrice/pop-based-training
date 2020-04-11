@@ -21,41 +21,29 @@ class MutationOperator:
     def __call__(self, obj: T, inplace: bool=False) -> T:
         """ Mutates either a `HyperParameters`, `Candidate` or `Population`. """ 
         obj = obj if inplace else copy.deepcopy(obj)
-        self.mutate(obj)
+        m = self.mutate(obj)
         return obj
 
     @singledispatchmethod
-    def mutate(self, obj) -> None:
-        pass
+    def mutate(self, obj: object) -> None:
+        """ Most general case: mutate a dataclass. """
+        if not dataclasses.is_dataclass(obj):
+            print(f"Cannot mutate {obj} of type {type(obj)}")
+            return
 
-    @mutate.register
-    def mutate_pop(self, population: Population) -> None:
-        """ Mutates a Population instance in-place. """
-        for candidate in population:
-            self.mutate(candidate)
-
-    @mutate.register
-    def mutate_candidate(self, candidate: Candidate) -> None:
-        """ Mutates a Candidate instance in-place. """
-        self.mutate(candidate.hparams)
-
-    @mutate.register
-    def mutate_hparam(self, obj: HyperParameters) -> None:
-        """ Mutates a HyperParameters instance in-place. """
-        obj = obj
         for field in dataclasses.fields(obj):
             value = getattr(obj, field.name, field.default)
             noise = random.gauss(self.mu, self.sigma)
 
             new_value = value
-            if isinstance(value, HyperParameters):
+            if dataclasses.is_dataclass(value):
                 new_value = self.mutate(value)
             elif isinstance(value, (int, float)):
                 new_value = value * noise
             
             # Make sure we don't exceed the bounds on that field, if there are any.
-            min_value = field.metadata.get("min_value")
-            max_value = field.metadata.get("max_value")
+            min_value = field.metadata.get("min")
+            max_value = field.metadata.get("max")
 
             if min_value is not None:
                 new_value = min(new_value, min_value)
@@ -74,3 +62,16 @@ class MutationOperator:
             
             # Set the attribute back on obj.
             setattr(obj, field.name, new_value)
+
+    @mutate.register
+    def mutate_pop(self, population: Population) -> None:
+        """ Mutates a Population instance in-place. """
+        for candidate in population:
+            self.mutate(candidate)
+
+    @mutate.register
+    def mutate_candidate(self, candidate: Candidate) -> None:
+        """ Mutates a Candidate instance in-place. """
+        self.mutate(candidate.hparams)
+
+        

@@ -6,8 +6,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import contextmanager
 from dataclasses import InitVar, dataclass, field, fields
-from typing import ClassVar, Type, Dict
-from typing import TypeVar, cast
+from typing import ClassVar, Dict, Type, TypeVar, Union, cast
 
 from priors import LogUniformPrior, Prior, UniformPrior
 from utils import T
@@ -33,6 +32,7 @@ def hparam(default: T,
         default=default,
         *args, **kwargs, 
     )
+
 
 @dataclass
 class HyperParameters:
@@ -68,11 +68,10 @@ class HyperParameters:
 
 
 if __name__ == "__main__":
-
     @dataclass
     class Bob(HyperParameters):
         learning_rate: float = hparam(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
-        n_layers: int = hparam(10, prior=UniformPrior(1,20))
+        n_layers: int = hparam(10, min=1, max=20, prior=UniformPrior(1,20))
         optimizer: str = "ADAM"
         momentum: float = 0.9
 
