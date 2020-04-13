@@ -32,10 +32,7 @@ class CrossoverOperator:
 @singledispatch
 def crossover(obj1: object, obj2: object, swap_p: float=0.5) -> None:
     """ Most General case: Randomly swap the attributes on two objects """
-    if dataclasses.is_dataclass(obj1) and dataclasses.is_dataclass(obj2):
-        crossover.dispatch(HyperParameters)(obj1, obj2, swap_p)
-    else:
-        crossover(vars(obj1), vars(obj2), swap_p)
+    raise RuntimeError(f"Cannot perform crossover between objects {obj1} and {obj2}.")
 
 
 @crossover.register
@@ -51,6 +48,7 @@ def crossover_hparam(obj1: HyperParameters, obj2: HyperParameters, swap_p: float
         if random.random() <= swap_p:
             setattr(obj1, field.name, v2)
             setattr(obj2, field.name, v1)
+
 
 @crossover.register
 def crossover_pop(pop1: Population, pop2: Population=None, swap_p: float=0.5) -> None:
@@ -70,7 +68,7 @@ def crossover_candidate(candidate1: Candidate, candidate2: Candidate, swap_p: fl
 
 
 @crossover.register
-def _(obj1: dict, obj2: dict, swap_p: float=0.5) -> None:
+def crossover_dicts(obj1: dict, obj2: dict, swap_p: float=0.5) -> None:
     """ Performs crossover between two `dict` instances in-place. """
     for key, v1 in obj1.items():
         if key in obj2:

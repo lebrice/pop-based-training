@@ -25,6 +25,7 @@ def hparam(default: T,
         "min": min,
         "max": max,
         "prior": prior,
+        "is_hparam": True,
     })
     kwargs["metadata"] = metadata
 

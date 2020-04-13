@@ -16,7 +16,8 @@ from priors import LogUniformPrior, UniformPrior
 def epbt(n_generations: int,
          initial_population: Population,
          evaluation_function: Callable[[Candidate], Candidate],
-         n_processes: int=None) -> Generator[List[Candidate], None, None]:
+         n_processes: int=None,
+         multiprocessing=multiprocessing) -> Generator[List[Candidate], None, None]:
     population = initial_population
     pop_size = len(population)
     elite_count = pop_size // 2
@@ -24,7 +25,7 @@ def epbt(n_generations: int,
     crossover = CrossoverOperator()
     mutate = MutationOperator()
 
-    with multiprocessing.Pool(4) as pool:
+    with multiprocessing.Pool(n_processes) as pool:
         for i in range(n_generations):
             # Sort the population by decreasing fitness (best first).
             population.sort(reverse=True)
@@ -38,11 +39,15 @@ def epbt(n_generations: int,
 
             candidates = elites + descendants
             
+            from pathlib import Path
+            from functools import wraps
+            from contextlib import redirect_stdout
+
             # Evaluate the population.
             population = Population()
             start_time = time.time()
             for evaluated_candidate in pool.imap_unordered(evaluation_function, candidates):
                 population.append(evaluated_candidate)
-                print(f"Evaluated candidate {evaluated_candidate.hparams} in {time.time() - start_time:.2}s. Fitness = {evaluated_candidate.fitness}")
+                print(f"Evaluated candidate {evaluated_candidate.hparams} in {time.time() - start_time}s. Fitness = {evaluated_candidate.fitness}")
             yield population
 
