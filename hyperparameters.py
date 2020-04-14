@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import contextmanager
 from dataclasses import InitVar, dataclass, field, fields
-from typing import ClassVar, Dict, Type, TypeVar, Union, cast
+from typing import ClassVar, Dict, Type, TypeVar, Union, cast, Sequence
 
 from priors import LogUniformPrior, Prior, UniformPrior
 from utils import T
@@ -18,14 +18,21 @@ def hparam(default: T,
           *args,
           min: T=None,
           max: T=None,
+        #   choices: Sequence[T]=None,  # TODO
           prior: Prior=None,
           **kwargs) -> T:
+    """ Overload of `dataclasses.field()` used to specify the range of an arg.
+    
+    Specifying a valid range prevents the mutation operator from changing the
+    value to one that doesn't make sense. For instance, negative number of
+    layers, etc.
+    """
     metadata = kwargs.get("metadata", {})
     metadata.update({
         "min": min,
         "max": max,
+        # "choices": choices,  # TODO
         "prior": prior,
-        "is_hparam": True,
     })
     kwargs["metadata"] = metadata
 
@@ -37,8 +44,20 @@ def hparam(default: T,
 
 @dataclass
 class HyperParameters:
-    sample_from_priors: ClassVar[bool] = False
+    """ Base class that marks the attributes as hyperparameters to be optimized.
+    
+    Basically, you should implement your own hyperparameter class, and have it
+    subclass `HyperParameters`. In doing so, the attributes of that class are
+    considered hyperparameters, and might have their values changed during
+    training.
+    
+    To limit the set of possible values or set a desired range, use the
+    `hyperparameters.hparam` function, along with the `min`, `max` or `choices`
+    (TODO) arguments.
 
+    NOTE: All the prior-related stuff is not related to EPBT. Might take it out.
+    It was just for the sake of experimentation.
+    """
     def __post_init__(self):
         # TODO: maybe filter through the fields and alert when one isn't compatible or something?
         if not self.sample_from_priors:
@@ -48,6 +67,8 @@ class HyperParameters:
             if prior is not None:
                 value = prior.sample()
                 setattr(self, field.name, value)
+
+    sample_from_priors: ClassVar[bool] = False
 
     @property
     def asdict(self) -> Dict:
@@ -78,5 +99,5 @@ if __name__ == "__main__":
 
     bob = Bob(learning_rate=0.1, n_layers=2)
     print(bob)
-    bob1 = Bob.sample()
+    # bob1 = Bob.sample()
     print(bob1)

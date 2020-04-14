@@ -1,17 +1,18 @@
 import random
 import time
 from dataclasses import dataclass
+from typing import List
 
+from candidate import Candidate
 from epbt import epbt
 from hyperparameters import HyperParameters, hparam
-from model import Candidate, Population
 from priors import LogUniformPrior, UniformPrior
 
 
 def dummy_evaluation(candidate: Candidate) -> Candidate:
     """Dummy evaluation which just waits for 1 second and sets a random fitness. 
     
-    An actual evaluation function should, given the previous `Candidate`:
+    An evaluation function should, given the previous `Candidate`:
     1. Create a new model, using the (potentially mutated) hyperparameters
        stored at `candidate.hparams`.
     2. Load weights (state_dict) from the previous model (stored at
@@ -39,23 +40,14 @@ class Bob(HyperParameters):
 
 if __name__ == "__main__":
     random.seed(0)
-    pop = Population([
+    pop: List[Candidate] = [
         Candidate(model=None, hparams=Bob(learning_rate=1e-2), fitness=0.1),
         Candidate(model=None, hparams=Bob(learning_rate=1e-5), fitness=0.2),
         Candidate(model=None, hparams=Bob(learning_rate=1e-7), fitness=0.5),
         Candidate(model=None, hparams=Bob(learning_rate=1e-8), fitness=0.3),
         Candidate(model=None, hparams=Bob(learning_rate=1e-2), fitness=0.4),
-    ])
-    pop_generator = epbt(n_generations=5, initial_population=pop, evaluation_function=dummy_evaluation)
+    ]
+    generator = epbt(n_generations=5, initial_population=pop, evaluation_function=dummy_evaluation)
     
-    start_time = time.time()
-    for i, population in enumerate(pop_generator):
-        end_time = time.time()
-
-        # print(f"Generation {i} ({end_time - start_time:.2}s): ")
-        # pprint.pprint(population)
-        
-        population.sort()
-        best_candidate = population[-1]
-        print(f"Best hparams at step {i}: {best_candidate.hparams} corresponding fitness: {best_candidate.fitness}.")
-        start_time = end_time
+    for i, best_candidate in enumerate(generator):
+        print(f"Best hparams at step {i}: {best_candidate}.")

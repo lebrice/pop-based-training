@@ -1,6 +1,6 @@
 import copy
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import *
 
 from hyperparameters import HyperParameters
@@ -8,7 +8,7 @@ from hyperparameters import HyperParameters
 
 @dataclass
 class Candidate:
-    model: Any
+    model: Any = field(repr=False)
     hparams: HyperParameters
     fitness: float
 

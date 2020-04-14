@@ -6,7 +6,7 @@ from functools import singledispatchmethod
 from typing import Any
 
 from hyperparameters import HyperParameters
-from model import Candidate, Population
+from candidate import Candidate
 from utils import T
 
 logger = logging.getLogger(__file__)
@@ -21,7 +21,7 @@ class MutationOperator:
     def __call__(self, obj: T, inplace: bool=False) -> T:
         """ Mutates either a `HyperParameters`, `Candidate` or `Population`. """ 
         obj = obj if inplace else copy.deepcopy(obj)
-        self.mutate(obj)
+        self.mutate(obj)  # type: ignore
         return obj
 
     @singledispatchmethod
@@ -33,15 +33,12 @@ class MutationOperator:
     @mutate.register
     def mutate_hparam(self, obj: HyperParameters) -> None:
         for field in dataclasses.fields(obj):
-            if not field.metadata.get("is_hparam"):
-                continue
-            
             value = getattr(obj, field.name, field.default)
             noise = random.gauss(self.mu, self.sigma)
 
             new_value: Any = value
             if isinstance(new_value, HyperParameters):
-                self.mutate(new_value)
+                self.mutate(new_value)  # type: ignore
             elif isinstance(new_value, (int, float)):
                 new_value = new_value * noise
 
@@ -69,12 +66,12 @@ class MutationOperator:
 
 
     @mutate.register
-    def mutate_pop(self, population: Population) -> None:
+    def mutate_pop(self, population: list) -> None:
         """ Mutates a Population instance in-place. """
         for candidate in population:
-            self.mutate(candidate)
+            self.mutate(candidate)  # type: ignore
 
     @mutate.register
     def mutate_candidate(self, candidate: Candidate) -> None:
         """ Mutates a Candidate instance in-place. """
-        self.mutate(candidate.hparams)
+        self.mutate(candidate.hparams)  # type: ignore

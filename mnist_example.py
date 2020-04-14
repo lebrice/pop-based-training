@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, List
 
 import torch
 import torch.nn as nn
@@ -17,7 +17,7 @@ from torchvision import datasets, models, transforms
 from config import Config
 from epbt import epbt
 from hyperparameters import HyperParameters, hparam
-from model import Candidate, Population
+from candidate import Candidate
 
 
 @dataclass
@@ -84,7 +84,7 @@ class MnistClassifier(nn.Module):
             ConvBlock(self.hidden_size, self.hidden_size, kernel_size=3, padding=1),
         )
         self.classifier = nn.Sequential(
-            nn.Flatten(),
+            nn.Flatten(),  # type: ignore
             nn.Linear(self.hidden_size, 10),
         )
         self.loss = nn.CrossEntropyLoss()
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     pop_size = 5
 
     genesis = evaluate_mnist_classifier(None)
-    initial_population = Population([genesis])
+    initial_population: List[Candidate] = [genesis]
     for i in range(pop_size-1):
         initial_population.append(copy.deepcopy(genesis))
 
@@ -270,8 +270,8 @@ if __name__ == '__main__':
         multiprocessing=torch.multiprocessing,
     )
     
-    for i, pop in enumerate(pop_gen):
-        print(f"Population hparams at step {i}: ", [c.hparams for c in pop])
+    for i, best_candidate in enumerate(pop_gen):
+        print(f"Best candidate at step {i}: {best_candidate}")
     
     # candidate = evaluate_mnist_classifier(None)
     # candidate = evaluate_mnist_classifier(candidate)

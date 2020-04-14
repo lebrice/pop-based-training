@@ -9,10 +9,8 @@ from pathlib import Path
 from typing import ClassVar, TextIO
 
 import numpy as np
-import torch
 import tqdm
 
-cuda_available = torch.cuda.is_available()
 today_str = lambda: (datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 root_logger = logging.getLogger()
@@ -44,18 +42,22 @@ class Config:
     
     # disables CUDA training
     no_cuda: bool = False
-    # Which device to use.
-    device: torch.device = torch.device("cuda" if cuda_available else "cpu")
     
     _root_logger_setup: ClassVar[bool] = False
 
     ## Non-parsed fields (created in __post_init__):
     def __post_init__(self):
-        torch.manual_seed(self.seed)
+        try:
+            import torch
+            torch.manual_seed(self.seed)
+
+            cuda_available = torch.cuda.is_available()
+            use_cuda = not self.no_cuda and cuda_available
+            self.device = torch.device("cuda" if use_cuda else "cpu")
+        except ImportError:
+            pass
         np.random.seed(self.seed)
         
-        use_cuda = not self.no_cuda and cuda_available
-        self.device = torch.device("cuda" if use_cuda else "cpu")
         self.dataloader_kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
         if self.debug:
@@ -134,23 +136,6 @@ class Config:
                 err_buf.seek(0)
                 with open(self.err_file, "a") as err_file:
                     err_file.writelines(err_buf.readlines())
-        
-
-class StdoutLogger(object):
-    def __init__(self, log_file: Path, stdout: TextIO=sys.stdout):
-        self.terminal = stdout
-        self.log_file = log_file
-        self.log_fp = open(self.log_file, "a")
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log_fp.write(message)
-        logging.debug(message)
-
-    def flush(self):
-        self.log_fp.flush()
-        self.terminal.flush()
-
 
 
 def get_new_file(file: Path) -> Path:
@@ -166,8 +151,10 @@ def get_new_file(file: Path) -> Path:
         return file
     else:
         i = 0
-        while (file_i := file.with_name(file.stem + f"_{i}" + file.suffix)).exists():
+        file_i = file.with_name(file.stem + f"_{i}" + file.suffix)
+        while file_i.exists():
             i += 1
+            file_i = file.with_name(file.stem + f"_{i}" + file.suffix)
         file = file_i
     return file
 

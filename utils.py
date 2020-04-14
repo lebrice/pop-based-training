@@ -5,7 +5,6 @@ from dataclasses import Field
 Dataclass = TypeVar("Dataclass")
 T = TypeVar("T")
 
-
 def field_dict(dataclass: Dataclass) -> Dict[str, Field]:
     result: Dict[str, Field] = {}
     for field in dataclasses.fields(dataclass):
