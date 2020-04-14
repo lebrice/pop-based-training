@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from typing import List
 
 from candidate import Candidate
-from epbt import epbt
+from main import epbt
 from hyperparameters import HyperParameters, hparam
-from priors import LogUniformPrior, UniformPrior
+
+from config import Config
 
 
 def dummy_evaluation(candidate: Candidate) -> Candidate:
@@ -32,8 +33,8 @@ def dummy_evaluation(candidate: Candidate) -> Candidate:
 
 @dataclass
 class Bob(HyperParameters):
-    learning_rate: float = hparam(default=1e-3, min=1e-10, max=1, prior=LogUniformPrior(1e-10, 1))
-    n_layers: int = hparam(10, min=1, max=20, prior=UniformPrior(1,20))
+    learning_rate: float = hparam(1e-3, min=1e-10, max=1)
+    n_layers: int = hparam(10, min=1, max=20)
     optimizer: str = "ADAM"
     momentum: float = 0.9
 

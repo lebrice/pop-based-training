@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
 from config import Config
-from epbt import epbt
+from main import epbt
 from hyperparameters import HyperParameters, hparam
 from candidate import Candidate
 

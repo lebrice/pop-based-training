@@ -92,7 +92,7 @@ def epbt(n_generations: int,
             for candidate in pool.imap_unordered(evaluation_function, candidates):
                 population.append(candidate)
                 t: float = time.time() - start_time
-                print(f"Evaluated candidate {candidate} in {t}s.")
+                print(f"Evaluated candidate {candidate} in {t:.2f}s.")
                 new_best_candidate = max(best_candidate, candidate)
                 if new_best_candidate is not best_candidate:
                     best_candidate = new_best_candidate

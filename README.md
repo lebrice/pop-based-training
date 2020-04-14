@@ -19,11 +19,11 @@ For a concrete example, see [the `mnist_pytorch_example.py` file](mnist_pytorch_
 ## Notes
 - A helper `Config` class is provided in [`config.py`](config.py) file, for your convenience. It contains some attributes and methods commonly useful when running an experiment, for instance creating log directory, etc.
     - It can also be very useful when paired with [`simple-parsing`](https://github.com/lebrice/SimpleParsing), to automatically create the corresponding command-line arguments!
-## Requirements:
-I was having fun playing around with Python3.8 when writing this, so it is a requirement for now.
-It would be pretty easy to change a few things and bring it down to 3.7. If anyone would like me to do that, let me know.
 
-The mnist pytorch example requires `pytorch`, `tqdm`, as well as [`simple-parsing`](https://github.com/lebrice/SimpleParsing), which generates command-line arguments automatically for the hyperparameter and config dataclasses.
+## Requirements:
+python >= 3.7
+
+The mnist pytorch example requires `torch`, `tqdm`, as well as [`simple-parsing`](https://github.com/lebrice/SimpleParsing), which generates command-line arguments automatically for the hyperparameter and config dataclasses.
 
 ```console
 conda env create --file environment.yml

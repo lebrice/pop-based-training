@@ -47,8 +47,9 @@ def crossover(obj1: object, obj2: object, swap_p: float=0.5) -> Tuple[object, ob
 @crossover.register
 def crossover_hparam(obj1: HyperParameters, obj2: HyperParameters, swap_p: float=0.5) -> None:
     """ Performs crossover between two dataclass instances in-place. """
-    obj1_fields: Dict[str, dataclasses.Field] = field_dict(obj1)
-    obj2_fields: Dict[str, dataclasses.Field] = field_dict(obj2)
+    ## TODO: unused for now:
+    # obj1_fields: Dict[str, dataclasses.Field] = field_dict(obj1)
+    # obj2_fields: Dict[str, dataclasses.Field] = field_dict(obj2)
 
     for field in dataclasses.fields(obj1):
         v1 = getattr(obj1, field.name)

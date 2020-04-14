@@ -1,19 +1,18 @@
 import datetime
 import logging
+import random
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import dataclass, field
 from functools import partial
 from io import StringIO
 from pathlib import Path
-from typing import ClassVar, TextIO
-
-import numpy as np
-import tqdm
+from typing import ClassVar, Optional
 
 today_str = lambda: (datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 root_logger = logging.getLogger()
+from utils import requires_import 
 
 @dataclass
 class Config:
@@ -29,7 +28,7 @@ class Config:
     # Run in debug mode.
     debug: bool = False
     # random seed
-    seed: int = 1
+    seed: Optional[int] = None
     # data directory
     data_dir: Path = Path("data")
     # Directory containing the logs of each run.
@@ -47,18 +46,19 @@ class Config:
 
     ## Non-parsed fields (created in __post_init__):
     def __post_init__(self):
-        try:
-            import torch
-            torch.manual_seed(self.seed)
+        if self.seed is not None:
+            random.seed(self.seed)
+            with requires_import("torch") as torch:
+                torch.manual_seed(self.seed)
+            with requires_import("numpy") as np:
+                np.random.seed(self.seed)
 
+        with requires_import("torch") as torch:
             cuda_available = torch.cuda.is_available()
             use_cuda = not self.no_cuda and cuda_available
-            self.device = torch.device("cuda" if use_cuda else "cpu")
-        except ImportError:
-            pass
-        np.random.seed(self.seed)
-        
-        self.dataloader_kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
+
+            self.device = torch.device("cuda" if use_cuda else "cpu")   
+            self.dataloader_kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
         if self.debug:
             self.log_dir = self.root_log_dir / "debug"
@@ -66,7 +66,6 @@ class Config:
             self.log_dir = get_new_file(self.root_log_dir / self.run_name)
         self.log_file = (self.log_dir / "log.txt")
         self.err_file = (self.log_dir / "error.txt")
-
 
     def setup_root_logger(self):
         """ Setup the root logger. 
@@ -158,17 +157,21 @@ def get_new_file(file: Path) -> Path:
         file = file_i
     return file
 
+try:
+    import tqdm
+        
+    class TqdmLoggingHandler(logging.Handler):
+        def __init__(self, level=logging.NOTSET):
+            super().__init__(level)
 
-class TqdmLoggingHandler(logging.Handler):
-    def __init__(self, level=logging.NOTSET):
-        super().__init__(level)
-
-    def emit(self, record):
-        try:
-            msg = self.format(record)
-            tqdm.tqdm.write(msg)
-            self.flush()
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            self.handleError(record)  
+        def emit(self, record):
+            try:
+                msg = self.format(record)
+                tqdm.tqdm.write(msg)
+                self.flush()
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                self.handleError(record)  
+except ImportError:
+    pass
