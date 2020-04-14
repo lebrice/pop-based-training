@@ -3,11 +3,11 @@ import time
 from dataclasses import dataclass
 from typing import List
 
-from candidate import Candidate
-from main import epbt
-from hyperparameters import HyperParameters, hparam
+from epbt.candidate import Candidate
+from epbt.hyperparameters import HyperParameters, hparam
+from epbt.helpers import Config
+from epbt.main import epbt
 
-from config import Config
 
 
 def dummy_evaluation(candidate: Candidate) -> Candidate:

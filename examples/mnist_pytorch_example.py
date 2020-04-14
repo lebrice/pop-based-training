@@ -1,6 +1,7 @@
 import copy
+import platform
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Union, List
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -14,10 +15,9 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torchvision import datasets, models, transforms
 
-from config import Config
-from main import epbt
-from hyperparameters import HyperParameters, hparam
-from candidate import Candidate
+from epbt import Candidate, HyperParameters, epbt, hparam
+from epbt.helpers import Config
+import logging
 
 
 @dataclass
@@ -167,15 +167,14 @@ def parse_hparams_and_config() -> Tuple[HParams, MnistConfig]:
     parser = ArgumentParser(description='PyTorch MNIST Example')
     parser.add_arguments(HParams, "hparams", default=HParams())
     parser.add_arguments(MnistConfig, "config", default=MnistConfig())
-    args = parser.parse_args()
-    
+    args, _ = parser.parse_known_args()
     hparams: HParams = args.hparams
     config: MnistConfig = args.config
     return hparams, config
 
 @dataclass
 class MnistCandidate(Candidate):
-    model: MnistClassifier
+    model: MnistClassifier = field(repr=False)
     hparams: HParams
     fitness: float
 
@@ -212,6 +211,18 @@ def get_dataloaders(batch_size: int, config: MnistConfig) -> Tuple[DataLoader, D
     return train_loader, test_loader
 
 
+class DataParallelPassthrough(torch.nn.DataParallel):
+    """ nn.DataParallel that allows access to the wrapped module attributes.
+
+    Taken from https://github.com/pytorch/pytorch/issues/16885
+    """
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.module, name)
+
+
 def evaluate_mnist_classifier(candidate: MnistCandidate=None) -> MnistCandidate:
     """Evaluation function, as described in `dummy_example.py` and `epbt.py`.
     
@@ -231,47 +242,85 @@ def evaluate_mnist_classifier(candidate: MnistCandidate=None) -> MnistCandidate:
         # then parse the params and args from the command-line.
         hparams, config = parse_hparams_and_config()
 
-    print("Evaluating candidate with hparams: ", hparams)
+    logger = config.get_logger(__file__)
+    logger.info("Evaluating candidate with hparams: ", hparams)
+    
     train_loader, test_loader = get_dataloaders(hparams.batch_size, config)
+
+    # TODO: on Windows, can't use torch multiprocessing with CUDA tensors,
+    # so learning is constrained to cpu-only. (see )
+    if config.device.type == "cuda" and platform.system() == "Windows":
+        config.device = torch.device("cpu")
+        logger.warning("TODO: Cannot use torch.multiprocessing and cuda tensors on Windows for now.")
+        # TODO: Try to see if we can get everything on the CPU and get it
+        # to work. (I previously tried model.cpu(), and it wasn't enough...)
+    
+    # Create the model instance
     model = MnistClassifier(hparams, config)
+    
+    # Distribute the model to all gpus to reduce the load.
+    if model.device.type == "cuda":
+        model = DataParallelPassthrough(model)
 
     if candidate:
         old_model = candidate.model
         model.load_state_dict(old_model.state_dict())
 
     new_candidate = MnistCandidate(model, hparams, 0.)
-
-    model.cuda()
+    
     for epoch in range(1, hparams.epochs + 1):
         model.train_epoch(train_loader, epoch)
         fitness = model.test_epoch(test_loader)
         new_candidate.fitness = fitness
-    model.cpu()
 
     if config.save_model:
-        torch.save(model.state_dict(), "mnist_cnn.pt")
+        torch.save(model.state_dict(), config.log_dir / "mnist_cnn.pt")
     
     return new_candidate
 
 
-if __name__ == '__main__':
-    pop_size = 5
+@dataclass
+class MnistExampleOptions:
+    # Size of the population.
+    population_size: int = 5
+    # Number of generations (steps of the algorithm).
+    n_generations: int = 3
+    # Maximum number of processes to use in multiprocessing.
+    n_processes: Optional[int] = 4
 
-    genesis = evaluate_mnist_classifier(None)
-    initial_population: List[Candidate] = [genesis]
-    for i in range(pop_size-1):
-        initial_population.append(copy.deepcopy(genesis))
 
-    pop_gen = epbt(
-        n_generations=3,
+def main(options: MnistExampleOptions):
+    # Create the first candidate from scratch.
+    original = evaluate_mnist_classifier(None)
+    initial_population: List[Candidate] = []
+    # Here we fill the initial population with copies of the original.
+    # NOTE: could also just as easily create/load many different candidates.
+    initial_population.append(original)
+    initial_population.extend(
+        copy.deepcopy(original) for _ in range(options.population_size-1)
+    )
+
+    # invoke the epbt function to get a generator of best candidates.
+    best_candidate_gen = epbt(
+        n_generations=options.population_size,
         initial_population=initial_population,
         evaluation_function=evaluate_mnist_classifier,
-        n_processes=2,
+        n_processes=options.n_processes,
         multiprocessing=torch.multiprocessing,
     )
     
-    for i, best_candidate in enumerate(pop_gen):
+    for i, best_candidate in enumerate(best_candidate_gen):
         print(f"Best candidate at step {i}: {best_candidate}")
+
+if __name__ == '__main__':
+    from epbt.utils import requires_import
+    options = MnistExampleOptions()
     
-    # candidate = evaluate_mnist_classifier(None)
-    # candidate = evaluate_mnist_classifier(candidate)
+    with requires_import("simple_parsing") as simple_parsing:
+        from simple_parsing import ArgumentParser
+        parser = ArgumentParser()
+        parser.add_arguments(MnistExampleOptions, dest="options", default=MnistExampleOptions())
+        args, unknown = parser.parse_known_args()
+        options = args.options
+
+    main(options)

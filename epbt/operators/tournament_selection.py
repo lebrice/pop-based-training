@@ -1,7 +1,8 @@
 import random
-from candidate import Candidate
 from typing import List, TypeVar
-from utils import T
+
+from ..candidate import Candidate
+from ..utils import T
 
 P = TypeVar("P", bound=List[Candidate])
 

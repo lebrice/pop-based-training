@@ -8,12 +8,13 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import Any, Callable, Generator, TypeVar, List
 
-from hyperparameters import HyperParameters, hparam
-from candidate import Candidate
-from operators import (CrossoverOperator, MutationOperator,
+from .hyperparameters import HyperParameters, hparam
+from .candidate import Candidate
+from .operators import (CrossoverOperator, MutationOperator,
                        TournamentSelectionOperator)
 
 C = TypeVar("C", bound=Candidate)
+
 
 def epbt(n_generations: int,
          initial_population: List[Candidate],

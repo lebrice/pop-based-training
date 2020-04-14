@@ -6,10 +6,9 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import contextmanager
 from dataclasses import InitVar, dataclass, field, fields
-from typing import ClassVar, Dict, Type, TypeVar, Union, cast, Sequence
+from typing import ClassVar, Dict, Sequence, Type, TypeVar, Union, cast
 
-from utils import T
-
+from .utils import T
 H = TypeVar("H", bound="HyperParameters")
 
 

@@ -12,7 +12,7 @@ from typing import ClassVar, Optional
 today_str = lambda: (datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 root_logger = logging.getLogger()
-from utils import requires_import 
+from ..utils import requires_import 
 
 @dataclass
 class Config:
@@ -100,7 +100,7 @@ class Config:
         console_formatter = logging.Formatter(
             "%(levelname)s: "
             "%(name)s - "
-            "./%(filename)s:%(lineno)d:\t"
+            # "./%(filename)s:%(lineno)d:\t"
             "%(funcName)s(): "
             "%(message)s"
             )

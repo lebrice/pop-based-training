@@ -7,9 +7,9 @@ from dataclasses import Field
 from functools import singledispatch
 from typing import Any, Dict, List, Tuple, TypeVar, Union, overload
 
-from hyperparameters import HyperParameters
-from candidate import Candidate
-from utils import Dataclass, T, field_dict
+from ..candidate import Candidate
+from ..hyperparameters import HyperParameters
+from ..utils import Dataclass, T, field_dict
 
 logger = logging.getLogger(__file__)
 P = TypeVar("P", bound=List[Candidate])

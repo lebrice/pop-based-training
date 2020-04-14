@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from functools import singledispatch
 from typing import Any, NamedTuple, Union
 
-from hyperparameters import HyperParameters
-from candidate import Candidate
-from utils import T
+from ..hyperparameters import HyperParameters
+from ..candidate import Candidate
+from ..utils import T
 
 logger = logging.getLogger(__file__)
 

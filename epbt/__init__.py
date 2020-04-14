@@ -1,6 +1,6 @@
 
 from .candidate import Candidate
-from .config import Config
+from .helpers.config import Config
 from .main import epbt
 from .hyperparameters import HyperParameters, hparam
 from .utils import field_dict
