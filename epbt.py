@@ -36,7 +36,7 @@ def epbt(n_generations: int,
        corresponding HyperParameters, and the resulting fitness value.
 
     For an example, check out the [dummy](dummy_example.py) and
-    [mnist](mnist_example.py) examples.
+    [mnist](mnist_pytorch_example.py) examples.
 
     Args:
         n_generations (int): The number of steps or generations to perform.
