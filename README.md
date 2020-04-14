@@ -1,6 +1,8 @@
 # (WIP) Simple Implementation of [Population-Based Training for Loss Function Optimization](https://arxiv.org/abs/2002.04225)
 
-This paper describes an approach to train the model and optimize the hyperparameters at the same time using an evolutionary algorithm. It is heavily based on the [Population Based Training paper](https://arxiv.org/abs/1711.09846), with an added parameterization of the loss function (which I have not yet implemented).
+This paper describes an approach to train the model and optimize the hyperparameters at the same time using an evolutionary algorithm. It is heavily based on the [Population Based Training paper](https://arxiv.org/abs/1711.09846), with an added parameterization the loss function (which I have not yet implemented) using a TaylorGLO parametrization, in order to also meta-learn/optimize the loss function.
+
+__This implementation is framework-agnostic.__ Feel free to use Pytorch, Tensorflow, or whatever else you like to use inside your custom evaluation function.
 
 ## Usage
 Check out the [dummy example file](dummy_example.py) file for an explanation. Basically, you should implement your own hyperparameter class, and have it subclass the `HyperParameters`. This way, the attributes of that class will become dynamic and have their values changed during training.
@@ -15,7 +17,6 @@ For a concrete example, see [the `mnist_pytorch_example.py` file](mnist_pytorch_
 
 
 ## Notes
-- This implementation is framework-agnostic. Feel free to use Pytorch, Tensorflow, or whatever else you like to use inside your evaluation function.
 - A helper `Config` class is provided in [`config.py`](config.py) file, for your convenience. It contains some attributes and methods commonly useful when running an experiment, for instance creating log directory, etc.
     - It can also be very useful when paired with [`simple-parsing`](https://github.com/lebrice/SimpleParsing), to automatically create the corresponding command-line arguments!
 ## Requirements:
