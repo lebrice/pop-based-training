@@ -5,7 +5,7 @@ This paper describes an approach to train the model and optimize the hyperparame
 __This implementation is framework-agnostic.__ Feel free to use Pytorch, Tensorflow, or whatever else you like to use inside your custom evaluation function.
 
 ## Usage
-Check out the [dummy example file](dummy_example.py) file for an explanation. Basically, you should implement your own hyperparameter class, and have it subclass the `HyperParameters`. This way, the attributes of that class will become dynamic and have their values changed during training.
+Check out the [dummy example file](examples/dummy_example.py) file for an explanation. Basically, you should implement your own hyperparameter class, and have it subclass the `HyperParameters`. This way, the attributes of that class will become dynamic and have their values changed during training.
 
 Then, create an evaluation function, which should take in an optional `Candidate` instance as an argument, which contains a previously-trained model as well as new hyperparameters, and constructs a new model, loads as much of the state from the old model (if provided) as possible, and evaluates this new model. The result of this evaluation is the "fitness" value (increasing). The evaluation function should then return a new `Candidate` instance.
 
@@ -13,7 +13,7 @@ That's basically it! Now just call the `epbt()` function, passing in the right a
 
 
 ## Example
-For a concrete example, see [the `mnist_pytorch_example.py` file](mnist_pytorch_example.py).
+For a concrete example, see [the `mnist_pytorch_example.py` file](examples/mnist_pytorch_example.py).
 
 
 ## Notes
